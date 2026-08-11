@@ -360,7 +360,16 @@ export function getHeaders(ignoreHeaders: boolean = false) {
     isAzure || isAnthropic || isGoogle,
   );
 
-  if (bearerToken) {
+  const shouldUseAccessCode =
+    !accessStore.useCustomConfig &&
+    isEnabledAccessControl &&
+    validString(accessStore.accessCode);
+
+  if (shouldUseAccessCode) {
+    headers["Authorization"] = getBearerToken(
+      ACCESS_CODE_PREFIX + accessStore.accessCode,
+    );
+  } else if (bearerToken) {
     headers[authHeader] = bearerToken;
   } else if (isEnabledAccessControl && validString(accessStore.accessCode)) {
     headers["Authorization"] = getBearerToken(

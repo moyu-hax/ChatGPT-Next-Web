@@ -331,7 +331,8 @@ const en: LocaleType = {
       Available: "Available",
       Unavailable: "Unavailable",
       Timeout: "Check timed out",
-      NoTextResponse: "The request succeeded, but the model returned no text",
+      InvalidResponse:
+        "The request succeeded but returned an invalid model response",
       Empty: "Fetch the model list to run individual or batch checks",
     },
     Access: {

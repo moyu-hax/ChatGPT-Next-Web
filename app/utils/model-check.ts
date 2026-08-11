@@ -21,8 +21,12 @@ export type ModelCheckResult = {
 
 const CHECK_MESSAGES: RequestMessage[] = [
   {
+    role: "system",
+    content: "test",
+  },
+  {
     role: "user",
-    content: "请回复“你好”，不要添加其他内容。",
+    content: "hi",
   },
 ];
 
@@ -47,28 +51,18 @@ function getErrorDetail(payload: unknown): string {
   return data.error?.message || data.message || data.msg || "";
 }
 
-function getAssistantText(payload: unknown): string {
-  if (!payload || typeof payload !== "object") return "";
+function hasCompletionChoice(payload: unknown): boolean {
+  if (!payload || typeof payload !== "object") return false;
 
-  const data = payload as {
-    choices?: Array<{
-      text?: string;
-      message?: {
-        content?: string | Array<{ text?: string }>;
-      };
-    }>;
-  };
-  const choice = data.choices?.[0];
-  const content = choice?.message?.content;
+  const choices = (payload as { choices?: unknown }).choices;
+  if (!Array.isArray(choices) || choices.length === 0) return false;
 
-  if (typeof content === "string") return content.trim();
-  if (Array.isArray(content)) {
-    return content
-      .map((item) => item.text || "")
-      .join("")
-      .trim();
-  }
-  return choice?.text?.trim() || "";
+  const choice = choices[0];
+  return (
+    !!choice &&
+    typeof choice === "object" &&
+    ("message" in choice || "text" in choice)
+  );
 }
 
 async function checkOpenAIModel(
@@ -78,12 +72,6 @@ async function checkOpenAIModel(
   const startedAt = Date.now();
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
-  const isReasoningModel =
-    model.startsWith("o1") ||
-    model.startsWith("o3") ||
-    model.startsWith("o4") ||
-    model.startsWith("gpt-5");
-
   try {
     const response = await fetch(`${ApiPath.OpenAI}/${OpenaiPath.ChatPath}`, {
       method: "POST",
@@ -93,25 +81,39 @@ async function checkOpenAIModel(
         model,
         messages: CHECK_MESSAGES,
         stream: false,
-        ...(isReasoningModel
-          ? { max_completion_tokens: 64 }
-          : { max_tokens: 16, temperature: 0 }),
       }),
     });
-    const payload = await response.json().catch(() => undefined);
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch {
+      return {
+        available: false,
+        latency: Date.now() - startedAt,
+        error: "invalid_response",
+      };
+    }
+
+    const detail = getErrorDetail(payload);
 
     if (response.ok) {
-      const assistantText = getAssistantText(payload);
-      return assistantText
+      if (detail) {
+        return {
+          available: false,
+          latency: Date.now() - startedAt,
+          error: detail,
+        };
+      }
+
+      return hasCompletionChoice(payload)
         ? { available: true, latency: Date.now() - startedAt }
         : {
             available: false,
             latency: Date.now() - startedAt,
-            error: "no_text_response",
+            error: "invalid_response",
           };
     }
 
-    const detail = getErrorDetail(payload);
     return {
       available: false,
       latency: Date.now() - startedAt,
