@@ -120,6 +120,9 @@ export function AccessCodeModelChecker() {
     if (state.result?.error === "timeout") {
       return Locale.Settings.ModelCheck.Timeout;
     }
+    if (state.result?.error === "no_text_response") {
+      return Locale.Settings.ModelCheck.NoTextResponse;
+    }
     return state.result?.error || Locale.Settings.ModelCheck.Unavailable;
   };
 

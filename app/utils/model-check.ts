@@ -22,7 +22,7 @@ export type ModelCheckResult = {
 const CHECK_MESSAGES: RequestMessage[] = [
   {
     role: "user",
-    content: "Reply with OK only.",
+    content: "请回复“你好”，不要添加其他内容。",
   },
 ];
 
@@ -45,6 +45,30 @@ function getErrorDetail(payload: unknown): string {
   };
   if (typeof data.error === "string") return data.error;
   return data.error?.message || data.message || data.msg || "";
+}
+
+function getAssistantText(payload: unknown): string {
+  if (!payload || typeof payload !== "object") return "";
+
+  const data = payload as {
+    choices?: Array<{
+      text?: string;
+      message?: {
+        content?: string | Array<{ text?: string }>;
+      };
+    }>;
+  };
+  const choice = data.choices?.[0];
+  const content = choice?.message?.content;
+
+  if (typeof content === "string") return content.trim();
+  if (Array.isArray(content)) {
+    return content
+      .map((item) => item.text || "")
+      .join("")
+      .trim();
+  }
+  return choice?.text?.trim() || "";
 }
 
 async function checkOpenAIModel(
@@ -70,14 +94,21 @@ async function checkOpenAIModel(
         messages: CHECK_MESSAGES,
         stream: false,
         ...(isReasoningModel
-          ? { max_completion_tokens: 16 }
-          : { max_tokens: 8, temperature: 0 }),
+          ? { max_completion_tokens: 64 }
+          : { max_tokens: 16, temperature: 0 }),
       }),
     });
     const payload = await response.json().catch(() => undefined);
 
     if (response.ok) {
-      return { available: true, latency: Date.now() - startedAt };
+      const assistantText = getAssistantText(payload);
+      return assistantText
+        ? { available: true, latency: Date.now() - startedAt }
+        : {
+            available: false,
+            latency: Date.now() - startedAt,
+            error: "no_text_response",
+          };
     }
 
     const detail = getErrorDetail(payload);

@@ -327,6 +327,7 @@ const cn = {
       Available: "可用",
       Unavailable: "不可用",
       Timeout: "检测超时",
+      NoTextResponse: "接口请求成功，但模型没有返回文字内容",
       Empty: "获取模型列表后可进行单次或批量检测",
     },
 
