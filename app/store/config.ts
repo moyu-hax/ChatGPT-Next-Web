@@ -118,6 +118,7 @@ export type CustomModelGroupSource = "access-code" | "custom";
 export interface CustomModelGroup {
   name: string;
   providerId: string;
+  sorted: number;
   source: CustomModelGroupSource;
   accessCode?: string;
   openaiUrl?: string;
@@ -130,6 +131,15 @@ export function getCustomModelGroupProviderId(name: string) {
     "%",
     "_",
   )}`;
+}
+
+export function getNextCustomModelGroupSort(groups: CustomModelGroup[]) {
+  return (
+    groups.reduce(
+      (max, group) => Math.max(max, group.sorted ?? -100000),
+      -100001,
+    ) + 1
+  );
 }
 
 export function limitNumber(
@@ -242,7 +252,7 @@ export const useAppConfig = createPersistStore(
   }),
   {
     name: StoreKey.Config,
-    version: 4.2,
+    version: 4.3,
 
     merge(persistedState, currentState) {
       const state = persistedState as ChatConfig | undefined;
@@ -304,6 +314,22 @@ export const useAppConfig = createPersistStore(
 
       if (version < 4.2) {
         state.customModelGroups = state.customModelGroups ?? [];
+      }
+
+      if (version < 4.3) {
+        state.customModelGroups = (state.customModelGroups ?? []).map(
+          (group, index) => ({
+            ...group,
+            sorted: -100000 + index,
+          }),
+        );
+        for (const group of state.customModelGroups) {
+          state.models.forEach((model) => {
+            if (model.provider?.id === group.providerId) {
+              model.provider.sorted = group.sorted;
+            }
+          });
+        }
       }
 
       return state as any;

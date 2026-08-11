@@ -678,8 +678,11 @@ export function Settings() {
   const showAccessCode = enabledAccessControl && !clientConfig?.isApp;
   const showAccessCodeModelChecker =
     !clientConfig?.isApp &&
-    ((accessStore.needCode && accessStore.accessCode.trim().length > 0) ||
-      accessStore.useCustomConfig);
+    !accessStore.useCustomConfig &&
+    accessStore.needCode &&
+    accessStore.accessCode.trim().length > 0;
+  const showCustomEndpointModelChecker =
+    !clientConfig?.isApp && accessStore.useCustomConfig;
 
   const accessCodeComponent = showAccessCode && (
     <ListItem
@@ -1870,6 +1873,7 @@ export function Settings() {
                   {chatglmConfigComponent}
                   {siliconflowConfigComponent}
                   {ai302ConfigComponent}
+                  {showCustomEndpointModelChecker && <AccessCodeModelChecker />}
                 </>
               )}
             </>

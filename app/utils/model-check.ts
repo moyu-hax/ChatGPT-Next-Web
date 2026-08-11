@@ -29,17 +29,18 @@ const CHECK_MESSAGES: RequestMessage[] = [
 
 function getModelRequestHeaders(group?: CustomModelGroup) {
   const accessStore = useAccessStore.getState();
-  const apiKey =
-    group?.source === "custom"
-      ? group.openaiApiKey?.trim() ?? ""
-      : accessStore.useCustomConfig
-      ? accessStore.openaiApiKey.trim()
-      : "";
-  const authorization = apiKey
-    ? getBearerToken(apiKey)
-    : getBearerToken(
-        ACCESS_CODE_PREFIX + (group?.accessCode ?? accessStore.accessCode),
-      );
+  let authorization = "";
+  if (group?.source === "custom") {
+    authorization = getBearerToken(group.openaiApiKey?.trim() ?? "");
+  } else if (group?.source === "access-code") {
+    authorization = getBearerToken(
+      ACCESS_CODE_PREFIX + (group.accessCode ?? ""),
+    );
+  } else if (accessStore.useCustomConfig) {
+    authorization = getBearerToken(accessStore.openaiApiKey.trim());
+  } else {
+    authorization = getBearerToken(ACCESS_CODE_PREFIX + accessStore.accessCode);
+  }
 
   return {
     "Content-Type": "application/json",

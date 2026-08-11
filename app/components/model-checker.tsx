@@ -13,6 +13,7 @@ import { useAccessStore, useAppConfig } from "../store";
 import {
   CustomModelGroup,
   getCustomModelGroupProviderId,
+  getNextCustomModelGroupSort,
 } from "../store/config";
 import {
   checkProviderModel,
@@ -62,6 +63,7 @@ export function AccessCodeModelChecker() {
   const getCurrentGroup = (): CustomModelGroup => ({
     name: normalizedGroupName,
     providerId: getCustomModelGroupProviderId(normalizedGroupName),
+    sorted: getNextCustomModelGroupSort(config.customModelGroups),
     source: accessStore.useCustomConfig ? "custom" : "access-code",
     accessCode: accessStore.useCustomConfig
       ? undefined
@@ -111,7 +113,7 @@ export function AccessCodeModelChecker() {
           id: providerId,
           providerName: normalizedGroupName,
           providerType: "custom",
-          sorted: 100,
+          sorted: group.sorted,
         },
       }));
 
@@ -313,6 +315,9 @@ export function AccessCodeModelChecker() {
 
 export function CustomModelGroupList() {
   const config = useAppConfig();
+  const groups = config.customModelGroups
+    .slice()
+    .sort((a, b) => a.sorted - b.sorted);
 
   return (
     <ListItem
@@ -321,12 +326,12 @@ export function CustomModelGroupList() {
       vertical
     >
       <div className={styles["model-group-list"]}>
-        {config.customModelGroups.length === 0 ? (
+        {groups.length === 0 ? (
           <div className={styles["model-checker-empty"]}>
             {Locale.Settings.ModelCheck.NoSavedGroups}
           </div>
         ) : (
-          config.customModelGroups.map((group) => (
+          groups.map((group) => (
             <div className={styles["model-group-item"]} key={group.providerId}>
               <div className={styles["model-checker-info"]}>
                 <div className={styles["model-checker-name"]}>{group.name}</div>
