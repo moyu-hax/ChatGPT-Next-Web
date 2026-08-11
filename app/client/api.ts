@@ -105,11 +105,17 @@ export interface LLMModelProvider {
   sorted: number;
 }
 
+export interface ListModelsOptions {
+  includeAll?: boolean;
+  headers?: Record<string, string>;
+  baseUrl?: string;
+}
+
 export abstract class LLMApi {
   abstract chat(options: ChatOptions): Promise<void>;
   abstract speech(options: SpeechOptions): Promise<ArrayBuffer>;
   abstract usage(): Promise<LLMUsage>;
-  abstract models(): Promise<LLMModel[]>;
+  abstract models(options?: ListModelsOptions): Promise<LLMModel[]>;
 }
 
 type ProviderName = "openai" | "azure" | "claude" | "palm";

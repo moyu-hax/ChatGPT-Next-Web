@@ -168,7 +168,7 @@ export const useAppConfig = createPersistStore(
       set(() => ({ ...DEFAULT_CONFIG }));
     },
 
-    mergeModels(newModels: LLMModel[]) {
+    mergeModels(newModels: LLMModel[], providerName?: ServiceProvider) {
       if (!newModels || newModels.length === 0) {
         return;
       }
@@ -177,7 +177,9 @@ export const useAppConfig = createPersistStore(
       const modelMap: Record<string, LLMModel> = {};
 
       for (const model of oldModels) {
-        model.available = false;
+        if (!providerName || model.provider?.providerName === providerName) {
+          model.available = false;
+        }
         modelMap[`${model.name}@${model?.provider?.id}`] = model;
       }
 

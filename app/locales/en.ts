@@ -313,6 +313,26 @@ const en: LocaleType = {
       Check: "Check",
       NoAccess: "Enter API Key to check balance",
     },
+    ModelCheck: {
+      Title: "Model List and Checks",
+      SubTitle:
+        "Use the access code to load administrator models and verify chat availability",
+      Count: (count: number) => `${count} models loaded`,
+      Fetch: "Fetch Models",
+      Fetching: "Fetching...",
+      FetchFailed: "Failed to fetch models",
+      Found: (count: number) => `${count} models loaded`,
+      BatchCheck: "Check All",
+      BatchComplete: (available: number, total: number) =>
+        `Check complete: ${available}/${total} models available`,
+      Check: "Check",
+      Checking: "Checking...",
+      Untested: "Not checked",
+      Available: "Available",
+      Unavailable: "Unavailable",
+      Timeout: "Check timed out",
+      Empty: "Fetch the model list to run individual or batch checks",
+    },
     Access: {
       SaasStart: {
         Title: "Use NextChat AI",

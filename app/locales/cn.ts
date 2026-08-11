@@ -310,6 +310,26 @@ const cn = {
       NoAccess: "输入 API Key 或访问密码查看余额",
     },
 
+    ModelCheck: {
+      Title: "模型列表与检测",
+      SubTitle: "使用访问密码获取管理员配置的模型，并检测对话可用性",
+      Count: (count: number) => `已获取 ${count} 个模型`,
+      Fetch: "获取模型列表",
+      Fetching: "正在获取...",
+      FetchFailed: "获取模型列表失败",
+      Found: (count: number) => `已获取 ${count} 个模型`,
+      BatchCheck: "批量检测",
+      BatchComplete: (available: number, total: number) =>
+        `检测完成：${available}/${total} 个模型可用`,
+      Check: "检测",
+      Checking: "检测中...",
+      Untested: "未检测",
+      Available: "可用",
+      Unavailable: "不可用",
+      Timeout: "检测超时",
+      Empty: "获取模型列表后可进行单次或批量检测",
+    },
+
     Access: {
       SaasStart: {
         Title: "使用 NextChat AI",

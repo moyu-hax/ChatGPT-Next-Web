@@ -1,0 +1,98 @@
+.model-checker {
+  width: 100%;
+}
+
+.model-checker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.model-checker-empty {
+  padding: 16px 0 4px;
+  color: var(--black);
+  font-size: 12px;
+  opacity: 0.55;
+}
+
+.model-checker-list {
+  max-height: 360px;
+  overflow-y: auto;
+  border-top: var(--border-in-light);
+}
+
+.model-checker-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 0;
+
+  &:not(:last-child) {
+    border-bottom: var(--border-in-light);
+  }
+}
+
+.model-checker-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.model-checker-name {
+  overflow: hidden;
+  color: var(--black);
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-checker-status-idle,
+.model-checker-status-checking,
+.model-checker-status-available,
+.model-checker-status-unavailable {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  margin-top: 4px;
+  font-size: 12px;
+
+  svg {
+    width: 13px;
+    height: 13px;
+    flex: 0 0 auto;
+  }
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.model-checker-status-idle,
+.model-checker-status-checking {
+  color: var(--black);
+  opacity: 0.55;
+}
+
+.model-checker-status-available {
+  color: var(--primary);
+}
+
+.model-checker-status-unavailable {
+  color: rgba($color: red, $alpha: 0.8);
+}
+
+@media only screen and (max-width: 600px) {
+  .model-checker-item {
+    align-items: flex-start;
+  }
+
+  .model-checker-list {
+    max-height: 320px;
+  }
+}
