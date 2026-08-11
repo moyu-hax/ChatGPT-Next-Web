@@ -316,8 +316,18 @@ const en: LocaleType = {
     ModelCheck: {
       Title: "Model List and Checks",
       SubTitle:
-        "Use the access code to load administrator models and verify chat availability",
+        "Load models through the active channel and verify chat availability",
       Count: (count: number) => `${count} models loaded`,
+      GroupCount: (group: string, count: number) =>
+        `${count} models loaded in ${group}`,
+      GroupName: "Model Group Name",
+      GroupNamePlaceholder: "For example: NextChat",
+      GroupNameHint:
+        "Required; cannot contain @ or match a built-in provider name",
+      GroupNameBuiltin:
+        "This name matches a built-in provider; choose another group name",
+      GroupNameDuplicate:
+        "This group name already exists; delete it before reusing the name",
       Fetch: "Fetch Models",
       Fetching: "Fetching...",
       FetchFailed: "Failed to fetch models",
@@ -334,6 +344,17 @@ const en: LocaleType = {
       InvalidResponse:
         "The request succeeded but returned an invalid model response",
       Empty: "Fetch the model list to run individual or batch checks",
+      SavedGroups: "Saved Custom Model Groups",
+      SavedGroupsSubTitle:
+        "Each group keeps its own channel and can be deleted",
+      NoSavedGroups: "No custom groups saved",
+      DeleteGroup: "Delete",
+      DeleteGroupConfirm: (group: string) =>
+        `Delete the “${group}” group and its models?`,
+      CustomChannel: "Custom endpoint",
+      AccessCodeChannel: "Access code",
+      GroupDetail: (count: number, channel: string, url?: string) =>
+        `${count} models · ${channel}${url ? ` · ${url}` : ""}`,
     },
     Access: {
       SaasStart: {

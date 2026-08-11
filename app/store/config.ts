@@ -62,6 +62,7 @@ export const DEFAULT_CONFIG = {
 
   customModels: "",
   models: DEFAULT_MODELS as any as LLMModel[],
+  customModelGroups: [] as CustomModelGroup[],
 
   modelConfig: {
     model: "gpt-4o-mini" as ModelType,
@@ -111,6 +112,25 @@ export type ChatConfig = typeof DEFAULT_CONFIG;
 export type ModelConfig = ChatConfig["modelConfig"];
 export type TTSConfig = ChatConfig["ttsConfig"];
 export type RealtimeConfig = ChatConfig["realtimeConfig"];
+
+export type CustomModelGroupSource = "access-code" | "custom";
+
+export interface CustomModelGroup {
+  name: string;
+  providerId: string;
+  source: CustomModelGroupSource;
+  accessCode?: string;
+  openaiUrl?: string;
+  openaiApiKey?: string;
+  models: string[];
+}
+
+export function getCustomModelGroupProviderId(name: string) {
+  return `access-code-${encodeURIComponent(name.toLowerCase()).replaceAll(
+    "%",
+    "_",
+  )}`;
+}
 
 export function limitNumber(
   x: number,
@@ -168,7 +188,7 @@ export const useAppConfig = createPersistStore(
       set(() => ({ ...DEFAULT_CONFIG }));
     },
 
-    mergeModels(newModels: LLMModel[], providerName?: ServiceProvider) {
+    mergeModels(newModels: LLMModel[], providerName?: string) {
       if (!newModels || newModels.length === 0) {
         return;
       }
@@ -193,11 +213,36 @@ export const useAppConfig = createPersistStore(
       }));
     },
 
+    upsertCustomModelGroup(group: CustomModelGroup) {
+      const groups = get().customModelGroups.slice();
+      const index = groups.findIndex(
+        (item) => item.name.toLowerCase() === group.name.toLowerCase(),
+      );
+      if (index === -1) groups.push(group);
+      else groups[index] = group;
+      set(() => ({ customModelGroups: groups }));
+    },
+
+    deleteCustomModelGroup(name: string) {
+      const group = get().customModelGroups.find(
+        (item) => item.name.toLowerCase() === name.toLowerCase(),
+      );
+      if (!group) return;
+      set(() => ({
+        customModelGroups: get().customModelGroups.filter(
+          (item) => item.name.toLowerCase() !== name.toLowerCase(),
+        ),
+        models: get().models.filter(
+          (model) => model.provider?.id !== group.providerId,
+        ),
+      }));
+    },
+
     allModels() {},
   }),
   {
     name: StoreKey.Config,
-    version: 4.1,
+    version: 4.2,
 
     merge(persistedState, currentState) {
       const state = persistedState as ChatConfig | undefined;
@@ -255,6 +300,10 @@ export const useAppConfig = createPersistStore(
           DEFAULT_CONFIG.modelConfig.compressModel;
         state.modelConfig.compressProviderName =
           DEFAULT_CONFIG.modelConfig.compressProviderName;
+      }
+
+      if (version < 4.2) {
+        state.customModelGroups = state.customModelGroups ?? [];
       }
 
       return state as any;

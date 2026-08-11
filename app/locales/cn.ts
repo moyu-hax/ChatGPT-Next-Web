@@ -312,8 +312,15 @@ const cn = {
 
     ModelCheck: {
       Title: "模型列表与检测",
-      SubTitle: "使用访问密码获取管理员配置的模型，并检测对话可用性",
+      SubTitle: "按当前通道获取模型，并检测对话可用性",
       Count: (count: number) => `已获取 ${count} 个模型`,
+      GroupCount: (group: string, count: number) =>
+        `${group} 分组已获取 ${count} 个模型`,
+      GroupName: "模型分组名称",
+      GroupNamePlaceholder: "例如：NextChat",
+      GroupNameHint: "必填，不能包含 @，且不能与内置服务商同名",
+      GroupNameBuiltin: "该名称与内置服务商重复，请使用其他分组名称",
+      GroupNameDuplicate: "该分组名称已经存在，请删除后再使用该名称",
       Fetch: "获取模型列表",
       Fetching: "正在获取...",
       FetchFailed: "获取模型列表失败",
@@ -329,6 +336,16 @@ const cn = {
       Timeout: "检测超时",
       InvalidResponse: "接口请求成功，但返回了无效的模型响应",
       Empty: "获取模型列表后可进行单次或批量检测",
+      SavedGroups: "已保存的自定义模型分组",
+      SavedGroupsSubTitle: "每个分组绑定唯一通道，可单独删除",
+      NoSavedGroups: "暂未保存自定义分组",
+      DeleteGroup: "删除",
+      DeleteGroupConfirm: (group: string) =>
+        `确定删除“${group}”分组及其模型吗？`,
+      CustomChannel: "自定义接口",
+      AccessCodeChannel: "访问密码",
+      GroupDetail: (count: number, channel: string, url?: string) =>
+        `${count} 个模型 · ${channel}${url ? ` · ${url}` : ""}`,
     },
 
     Access: {

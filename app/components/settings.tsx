@@ -89,7 +89,7 @@ import { useMaskStore } from "../store/mask";
 import { ProviderType } from "../utils/cloud";
 import { TTSConfigList } from "./tts-config";
 import { RealtimeConfigList } from "./realtime-chat/realtime-config";
-import { AccessCodeModelChecker } from "./model-checker";
+import { AccessCodeModelChecker, CustomModelGroupList } from "./model-checker";
 
 function EditPromptModal(props: { id: string; onClose: () => void }) {
   const promptStore = usePromptStore();
@@ -677,9 +677,9 @@ export function Settings() {
   const clientConfig = useMemo(() => getClientConfig(), []);
   const showAccessCode = enabledAccessControl && !clientConfig?.isApp;
   const showAccessCodeModelChecker =
-    accessStore.needCode &&
     !clientConfig?.isApp &&
-    accessStore.accessCode.trim().length > 0;
+    ((accessStore.needCode && accessStore.accessCode.trim().length > 0) ||
+      accessStore.useCustomConfig);
 
   const accessCodeComponent = showAccessCode && (
     <ListItem
@@ -1919,6 +1919,7 @@ export function Settings() {
               }
             ></input>
           </ListItem>
+          <CustomModelGroupList />
         </List>
 
         <List>

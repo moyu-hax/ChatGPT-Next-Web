@@ -2,6 +2,26 @@
   width: 100%;
 }
 
+.model-checker-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  color: var(--black);
+  font-size: 13px;
+
+  input {
+    width: 100%;
+    max-width: none;
+    text-align: left;
+  }
+
+  small {
+    font-size: 11px;
+    opacity: 0.55;
+  }
+}
+
 .model-checker-actions {
   display: flex;
   flex-wrap: wrap;
@@ -20,6 +40,33 @@
   max-height: 360px;
   overflow-y: auto;
   border-top: var(--border-in-light);
+}
+
+.model-group-list {
+  width: 100%;
+}
+
+.model-group-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 0;
+
+  &:not(:last-child) {
+    border-bottom: var(--border-in-light);
+  }
+}
+
+.model-group-detail {
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--black);
+  font-size: 12px;
+  opacity: 0.55;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .model-checker-item {

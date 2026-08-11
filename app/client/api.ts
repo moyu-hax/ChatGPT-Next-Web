@@ -10,7 +10,9 @@ import {
   ModelType,
   useAccessStore,
   useChatStore,
+  useAppConfig,
 } from "../store";
+import type { CustomModelGroup } from "../store/config";
 import { ChatGPTApi, DalleRequestPayload } from "./platforms/openai";
 import { GeminiProApi } from "./platforms/google";
 import { ClaudeApi } from "./platforms/anthropic";
@@ -109,6 +111,7 @@ export interface ListModelsOptions {
   includeAll?: boolean;
   headers?: Record<string, string>;
   baseUrl?: string;
+  group?: CustomModelGroup;
 }
 
 export abstract class LLMApi {
@@ -247,7 +250,10 @@ export function validString(x: string): boolean {
   return x?.length > 0;
 }
 
-export function getHeaders(ignoreHeaders: boolean = false) {
+export function getHeaders(
+  ignoreHeaders: boolean = false,
+  customGroup?: CustomModelGroup,
+) {
   const accessStore = useAccessStore.getState();
   const chatStore = useChatStore.getState();
   let headers: Record<string, string> = {};
@@ -262,6 +268,15 @@ export function getHeaders(ignoreHeaders: boolean = false) {
 
   function getConfig() {
     const modelConfig = chatStore.currentSession().mask.modelConfig;
+    const modelGroup =
+      customGroup ??
+      useAppConfig
+        .getState()
+        .customModelGroups.find(
+          (group) =>
+            group.name.toLowerCase() ===
+            modelConfig.providerName?.toLowerCase(),
+        );
     const isGoogle = modelConfig.providerName === ServiceProvider.Google;
     const isAzure = modelConfig.providerName === ServiceProvider.Azure;
     const isAnthropic = modelConfig.providerName === ServiceProvider.Anthropic;
@@ -320,6 +335,7 @@ export function getHeaders(ignoreHeaders: boolean = false) {
       isAI302,
       apiKey,
       isEnabledAccessControl,
+      modelGroup,
     };
   }
 
@@ -349,6 +365,7 @@ export function getHeaders(ignoreHeaders: boolean = false) {
     isAI302,
     apiKey,
     isEnabledAccessControl,
+    modelGroup,
   } = getConfig();
   // when using baidu api in app, not set auth header
   if (isBaidu && clientConfig?.isApp) return headers;
@@ -356,9 +373,21 @@ export function getHeaders(ignoreHeaders: boolean = false) {
   const authHeader = getAuthHeader();
 
   const bearerToken = getBearerToken(
-    apiKey,
+    modelGroup?.source === "custom" ? modelGroup.openaiApiKey ?? "" : apiKey,
     isAzure || isAnthropic || isGoogle,
   );
+
+  if (modelGroup?.source === "access-code") {
+    headers["Authorization"] = getBearerToken(
+      ACCESS_CODE_PREFIX + (modelGroup.accessCode ?? ""),
+    );
+    return headers;
+  }
+
+  if (modelGroup?.source === "custom") {
+    if (bearerToken) headers["Authorization"] = bearerToken;
+    return headers;
+  }
 
   const shouldUseAccessCode =
     !accessStore.useCustomConfig &&

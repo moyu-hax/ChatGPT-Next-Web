@@ -4,13 +4,10 @@ import {
   LLMModel,
   RequestMessage,
 } from "../client/api";
-import {
-  ACCESS_CODE_PREFIX,
-  ApiPath,
-  OpenaiPath,
-  ServiceProvider,
-} from "../constant";
+import { ACCESS_CODE_PREFIX, OpenaiPath, ServiceProvider } from "../constant";
+import { ChatGPTApi } from "../client/platforms/openai";
 import { useAccessStore } from "../store";
+import type { CustomModelGroup } from "../store/config";
 import { fetch } from "./stream";
 
 export type ModelCheckResult = {
@@ -30,12 +27,24 @@ const CHECK_MESSAGES: RequestMessage[] = [
   },
 ];
 
-function getAccessCodeHeaders() {
-  const accessCode = useAccessStore.getState().accessCode;
+function getModelRequestHeaders(group?: CustomModelGroup) {
+  const accessStore = useAccessStore.getState();
+  const apiKey =
+    group?.source === "custom"
+      ? group.openaiApiKey?.trim() ?? ""
+      : accessStore.useCustomConfig
+      ? accessStore.openaiApiKey.trim()
+      : "";
+  const authorization = apiKey
+    ? getBearerToken(apiKey)
+    : getBearerToken(
+        ACCESS_CODE_PREFIX + (group?.accessCode ?? accessStore.accessCode),
+      );
+
   return {
     "Content-Type": "application/json",
     Accept: "application/json",
-    Authorization: getBearerToken(ACCESS_CODE_PREFIX + accessCode),
+    Authorization: authorization,
   };
 }
 
@@ -66,16 +75,18 @@ function hasCompletionChoice(payload: unknown): boolean {
 }
 
 async function checkOpenAIModel(
+  api: ChatGPTApi,
   model: string,
   timeoutMs: number,
+  group?: CustomModelGroup,
 ): Promise<ModelCheckResult> {
   const startedAt = Date.now();
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(`${ApiPath.OpenAI}/${OpenaiPath.ChatPath}`, {
+    const response = await fetch(api.path(OpenaiPath.ChatPath, group), {
       method: "POST",
-      headers: getAccessCodeHeaders(),
+      headers: getModelRequestHeaders(group),
       signal: controller.signal,
       body: JSON.stringify({
         model,
@@ -138,11 +149,12 @@ async function checkOpenAIModel(
 
 export async function fetchProviderModels(
   provider: ServiceProvider,
+  group?: CustomModelGroup,
 ): Promise<LLMModel[]> {
   const models = await getClientApi(provider).llm.models({
     includeAll: true,
-    headers: getAccessCodeHeaders(),
-    baseUrl: ApiPath.OpenAI,
+    headers: getModelRequestHeaders(group),
+    group,
   });
   const uniqueModels = new Map<string, LLMModel>();
 
@@ -161,10 +173,11 @@ export async function checkProviderModel(
   provider: ServiceProvider,
   model: string,
   timeoutMs = 30000,
+  group?: CustomModelGroup,
 ): Promise<ModelCheckResult> {
   const api = getClientApi(provider);
-  if (provider === ServiceProvider.OpenAI) {
-    return checkOpenAIModel(model, timeoutMs);
+  if (provider === ServiceProvider.OpenAI && api.llm instanceof ChatGPTApi) {
+    return checkOpenAIModel(api.llm, model, timeoutMs, group);
   }
 
   const startedAt = Date.now();
@@ -190,7 +203,7 @@ export async function checkProviderModel(
         messages: CHECK_MESSAGES,
         config: {
           model,
-          providerName: provider,
+          providerName: group?.name ?? provider,
           stream: false,
           temperature: 0,
         },
@@ -232,6 +245,7 @@ export async function checkProviderModels(
   models: string[],
   onResult: (model: string, result: ModelCheckResult) => void,
   concurrency = 3,
+  group?: CustomModelGroup,
 ) {
   let cursor = 0;
   const workerCount = Math.min(Math.max(concurrency, 1), models.length);
@@ -240,7 +254,7 @@ export async function checkProviderModels(
     while (cursor < models.length) {
       const index = cursor++;
       const model = models[index];
-      const result = await checkProviderModel(provider, model);
+      const result = await checkProviderModel(provider, model, 30000, group);
       onResult(model, result);
     }
   };

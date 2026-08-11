@@ -36,6 +36,7 @@ import {
   MultimodalContent,
   SpeechOptions,
 } from "../api";
+import type { CustomModelGroup } from "@/app/store/config";
 import Locale from "../../locales";
 import { getClientConfig } from "@/app/config/client";
 import {
@@ -83,13 +84,18 @@ export interface DalleRequestPayload {
 export class ChatGPTApi implements LLMApi {
   private disableListModels = true;
 
-  path(path: string): string {
+  path(path: string, customGroup?: CustomModelGroup): string {
     const accessStore = useAccessStore.getState();
 
     let baseUrl = "";
 
     const isAzure = path.includes("deployments");
-    if (accessStore.useCustomConfig) {
+    if (customGroup) {
+      baseUrl =
+        customGroup.source === "custom"
+          ? customGroup.openaiUrl || ""
+          : ApiPath.OpenAI;
+    } else if (accessStore.useCustomConfig) {
       if (isAzure && !accessStore.isValidAzure()) {
         throw Error(
           "incomplete azure config, please check it in your settings page",
@@ -185,6 +191,13 @@ export class ChatGPTApi implements LLMApi {
   }
 
   async chat(options: ChatOptions) {
+    const customGroup = useAppConfig
+      .getState()
+      .customModelGroups.find(
+        (group) =>
+          group.name.toLowerCase() ===
+          options.config.providerName?.toLowerCase(),
+      );
     const modelConfig = {
       ...useAppConfig.getState().modelConfig,
       ...useChatStore.getState().currentSession().mask.modelConfig,
@@ -296,10 +309,12 @@ export class ChatGPTApi implements LLMApi {
             (model?.displayName ?? model?.name) as string,
             useCustomConfig ? useAccessStore.getState().azureApiVersion : "",
           ),
+          customGroup,
         );
       } else {
         chatPath = this.path(
           isDalle3 ? OpenaiPath.ImagePath : OpenaiPath.ChatPath,
+          customGroup,
         );
       }
       if (shouldStream) {
@@ -313,7 +328,7 @@ export class ChatGPTApi implements LLMApi {
         streamWithThink(
           chatPath,
           requestPayload,
-          getHeaders(),
+          getHeaders(false, customGroup),
           tools as any,
           funcs,
           controller,
@@ -406,7 +421,7 @@ export class ChatGPTApi implements LLMApi {
           method: "POST",
           body: JSON.stringify(requestPayload),
           signal: controller.signal,
-          headers: getHeaders(),
+          headers: getHeaders(false, customGroup),
         };
 
         // make a fetch request
@@ -498,7 +513,9 @@ export class ChatGPTApi implements LLMApi {
       return DEFAULT_MODELS.slice();
     }
 
-    const listPath = options.baseUrl
+    const listPath = options.group
+      ? this.path(OpenaiPath.ListModelPath, options.group)
+      : options.baseUrl
       ? `${options.baseUrl.replace(/\/$/, "")}/${OpenaiPath.ListModelPath}`
       : this.path(OpenaiPath.ListModelPath);
     const res = await fetch(listPath, {

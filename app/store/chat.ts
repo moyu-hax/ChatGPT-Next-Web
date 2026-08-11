@@ -123,6 +123,16 @@ function getSummarizeModel(
   currentModel: string,
   providerName: string,
 ): string[] {
+  if (
+    useAppConfig
+      .getState()
+      .customModelGroups.some(
+        (group) => group.name.toLowerCase() === providerName.toLowerCase(),
+      )
+  ) {
+    return [currentModel, providerName];
+  }
+
   // if it is using gpt-* models, force to use 4o-mini to summarize
   if (currentModel.startsWith("gpt") || currentModel.startsWith("chatgpt")) {
     const configStore = useAppConfig.getState();
